@@ -1,0 +1,8 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: ROOT-Sim
+Upstream-Contact: HPDCS Group <rootsim@googlegroups.com>
+Source: https://github.com/ROOT-Sim/random-number-generators
+
+Files: .github/*
+Copyright: 2008-2021 HPDCS Group <rootsim@googlegroups.com>
+License: CC0-1.0
