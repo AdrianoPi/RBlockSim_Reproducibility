@@ -2,7 +2,7 @@
     "what_to_reproduce": "all",
     "worker_threads_attacks": 8,
     "network_sizes_attacks": [
-        100, 1000, 10000, 100000
+        100, 1000, 10000
     ],
     "worker_threads_performance": [
         1, 4, 8, 16, 22, 44, 66, 88

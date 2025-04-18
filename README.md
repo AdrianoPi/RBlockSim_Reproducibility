@@ -47,7 +47,7 @@ The dictionary has the following fields:
     * `"attacks"` to reproduce figures 3, 4, 5, and 8
     * `"performance"` to reproduce figures 6 and 7
     * `"all"` to reproduce everything.
-* `"network_sizes_attacks"` - Specifies the list of network sizes to run the attack simulations with `[100, 1000, 10000, 100000]` are the ones used in the paper.
+* `"network_sizes_attacks"` - Specifies the list of network sizes to run the attack simulations with `[100, 1000, 10000]` are the ones used in the paper.
 * `"worker_threads_attacks"` - Specifies the (single) number of worker threads to use for attack evaluation simulations. Default is `16`, we suggest setting it to the highest number possible **less than or equal to 16** for a speedier reproduction of the results, but feel free to experiment. Do NOT pick a number higher than the available computational units on your machine, or the runs will not start.
 * `"network_sizes_performance"` - Specifies the list of network sizes to run the performance experiments with `[100, 1000, 10000, 100000]` are the ones used in the paper.
 * `"worker_threads_performance"` - Specifies the various numbers of worker threads to run the simulation with **for performance experiments** (Figures 6 and 7) `[1, 4, 8, 16, 22, 44, 66, 88]` are the values used in the paper. Change it to match the capabilities of your machine. Do NOT pick numbers higher than the available computational units on your machine, or the runs will not start.
