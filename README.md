@@ -44,16 +44,23 @@ The artifact is containerized, and a shell script `reproduce.sh` is provided tha
 A configuration file is provided in the form of a JSON file containing a dictionary.
 The dictionary has the following fields:
 * `"what_to_reproduce"` - Specifies which experiments to run. Acceptable values are:
-    * `"attacks"` to reproduce figures 3, 4, 5, and 8
-    * `"performance"` to reproduce figures 6 and 7
+    * `"attacks"` to reproduce figures 3, 4, and 5.
+    * `"figure_8"` to reproduce figure 8.
+    * `"performance"` to reproduce figures 6 and 7.
     * `"all"` to reproduce everything.
 * `"network_sizes_attacks"` - Specifies the list of network sizes to run the attack simulations with `[100, 1000, 10000]` are the ones used in the paper.
-* `"worker_threads_attacks"` - Specifies the (single) number of worker threads to use for attack evaluation simulations. Default is `16`, we suggest setting it to the highest number possible **less than or equal to 16** for a speedier reproduction of the results, but feel free to experiment. Do NOT pick a number higher than the available computational units on your machine, or the runs will not start.
+* `"worker_threads_attacks"` - Specifies the (single) number of worker threads to use for attack evaluation simulations. Default is `8`, we suggest setting it to the highest number possible **less than or equal to 16** for a speedier reproduction of the results, but feel free to experiment. Do NOT pick a number higher than the available computational units on your machine, or the runs will not start.
+* `"network_sizes_figure_8"` - Specifies the list of network sizes to run the attack simulations for Figure 8 with. `[1000, 10000, 100000]` are the ones used in the paper.
+* `"worker_threads_figure_8"` - Specifies the (single) number of worker threads to use for attack evaluation simulations. Default is `8`, we suggest setting it to the highest number possible **less than or equal to 16** for a speedier reproduction of the results, but feel free to experiment. Do NOT pick a number higher than the available computational units on your machine, or the runs will not start.
 * `"network_sizes_performance"` - Specifies the list of network sizes to run the performance experiments with `[100, 1000, 10000, 100000]` are the ones used in the paper.
 * `"worker_threads_performance"` - Specifies the various numbers of worker threads to run the simulation with **for performance experiments** (Figures 6 and 7) `[1, 4, 8, 16, 22, 44, 66, 88]` are the values used in the paper. Change it to match the capabilities of your machine. Do NOT pick numbers higher than the available computational units on your machine, or the runs will not start.
 * `"iterations"` - Specifies the number of times each experiment is to be repeated. Default `1`.
 
 The run-time will heavily depend on the configuration.
+
+**Note about Figure 8**: a version of Figure 8 will also be produced when running the reproduction configuration `"attacks"`.
+However, the original Figure 8 also uses network size 100'000, which greatly increased the time required to reproduce the experiments.
+A quality of life improvement is thus the reason for separating Figure 8 from the rest of attack-related experiments.
 
 ## Reproduced results
 
