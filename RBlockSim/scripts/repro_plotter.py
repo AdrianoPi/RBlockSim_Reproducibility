@@ -322,7 +322,7 @@ def load_runs_separate_by_attack_type(main_folder_path):
         single_run_data = load_attack_data(run_folder_path)
         if single_run_data is None:
             continue
-        
+
         attack_type = single_run_data["attack_info"]["attack_type"]
         if attack_type not in runs:
             runs[attack_type] = []
@@ -396,7 +396,7 @@ def load_attack_data(folder_path):
 
 def plot_attacks(network_sizes, network_size_to_data_folders, plot_output_folder):
     data_dir = os.path.dirname(list(network_size_to_data_folders.values())[0])
-    plot_ram_usage_vs_sim_progress(data_dir, network_sizes)
+    plot_ram_usage_vs_sim_progress(data_dir, network_sizes, plot_output_folder)
 
     for size in network_sizes:
         main_folder_path = network_size_to_data_folders[size]
@@ -415,6 +415,11 @@ def plot_attacks(network_sizes, network_size_to_data_folders, plot_output_folder
         plot_selfish_success_rate(
             size, os.path.join(plot_output_folder, f"Figure_5_{size}.eps")
         )
+
+
+def plot_figure_8(network_sizes, network_size_to_data_folders, plot_output_folder):
+    data_dir = os.path.dirname(list(network_size_to_data_folders.values())[0])
+    plot_ram_usage_vs_sim_progress(data_dir, network_sizes, plot_output_folder)
 
 
 def load_smaller_json_files_together(input_folder, input_files):
@@ -507,7 +512,11 @@ def compute_selfish_mining_successes(stats, depth, nodes_count):
 def plot_expected_vs_actual_mining_rate(out_path=None):
     plt.rcParams["font.size"] = FONT_SIZE
 
-    f_all = [fname for fname in os.listdir(g_processed_json_files_folder) if fname.endswith(".json")]
+    f_all = [
+        fname
+        for fname in os.listdir(g_processed_json_files_folder)
+        if fname.endswith(".json")
+    ]
 
     runs_all = load_smaller_json_files_together(g_processed_json_files_folder, f_all)
 
@@ -527,16 +536,18 @@ def plot_expected_vs_actual_mining_rate(out_path=None):
     plt.cla()
 
 
-def plot_ram_usage_vs_sim_progress(data_folder_path, network_sizes):
+def plot_ram_usage_vs_sim_progress(data_folder_path, network_sizes, plot_output_folder):
     usages = []
+    local_sizes = []
     for size in network_sizes:
         new_usages = get_splined_ram_usage(data_folder_path, size)
         if new_usages is None:
             # Not enough datapoints to spline
             continue
         usages.append(new_usages)
+        local_sizes.append(size)
 
-    for size, usages in zip(network_sizes, usages):
+    for size, usages in zip(local_sizes, usages):
         # structure of usages[attack_type][catchup_tolerance][depth][worker_threads] = (xnew, splined_usage)
         elected_usage = None
         elected_x = None
@@ -553,16 +564,12 @@ def plot_ram_usage_vs_sim_progress(data_folder_path, network_sizes):
                         elected_x = x
                     break
                 break
-            break
-
-        plt.plot(elected_x, elected_usage, label=str(size) + " nodes")
+            plt.plot(elected_x, elected_usage, label=str(size) + " nodes")
 
     plt.legend()
     plt.xlabel("Simulation Progress %", fontsize=LABEL_FONT_SIZE)
     plt.ylabel("RAM usage (GB)", fontsize=LABEL_FONT_SIZE)
-    plt.savefig(
-        os.path.join(plot_output_folder, "Figure_8.eps"), bbox_inches="tight"
-    )
+    plt.savefig(os.path.join(plot_output_folder, "Figure_8.eps"), bbox_inches="tight")
     plt.clf()
     plt.cla()
 
@@ -599,14 +606,18 @@ def get_splined_ram_usage(data_folder_path, network_size):
 
                         xnew = np.linspace(0.0, 1.0, 300)
                         spl = make_interp_spline(
-                            np.linspace(0.0, 1.0, len(elected_usage)), elected_usage, k=3
+                            np.linspace(0.0, 1.0, len(elected_usage)),
+                            elected_usage,
+                            k=3,
                         )
                         splined_usage = spl(xnew)
+                        splined_usage = [0 if u < 0 else u for u in splined_usage]
                         splined_usages[attack_type][catchup_tolerance][depth][
                             worker_threads
                         ] = (xnew, splined_usage)
         return splined_usages
     except Exception as e:
+        print("Could not spline RAM usage for network size", network_size)
         return None
 
 
@@ -614,24 +625,49 @@ def load_RAM_usages_separate_by_attack_type(folder_path, network_size):
     # To have a coherent reading of the data, I want to separate the runs by attack type, and then by catchup tolerance, and then by depth, and then by worker thread count
     runs = {}
 
+    fiftyone_runs_metadata = []
+    selfish_runs_metadata = []
+    figure_8_runs_metadata = []
+
     # In the main folder, open the 'experiments_ran_metadata_and_RAM_{size}.json' file
-    with open(
-        os.path.join(
-            folder_path, f'results_{network_size}', "experiments_ran_metadata_and_RAM_" + str(network_size) + "_a51.json"
-        ),
-        "r",
-    ) as f:
-        fiftyone_runs_metadata = json.load(f)
+    try:
+        with open(
+            os.path.join(
+                folder_path,
+                f"results_{network_size}",
+                "experiments_ran_metadata_and_RAM_" + str(network_size) + "_a51.json",
+            ),
+            "r",
+        ) as f:
+            fiftyone_runs_metadata = json.load(f)
 
-    with open(
-        os.path.join(
-            folder_path, f'results_{network_size}', "experiments_ran_metadata_and_RAM_" + str(network_size) + "_aselfish.json"
-        ),
-        "r",
-    ) as f:
-        selfish_runs_metadata = json.load(f)
+        with open(
+            os.path.join(
+                folder_path,
+                f"results_{network_size}",
+                "experiments_ran_metadata_and_RAM_"
+                + str(network_size)
+                + "_aselfish.json",
+            ),
+            "r",
+        ) as f:
+            selfish_runs_metadata = json.load(f)
+    except:
+        with open(
+            os.path.join(
+                folder_path,
+                f"results_{network_size}",
+                "experiments_ran_metadata_and_RAM_"
+                + str(network_size)
+                + "_afigure_8.json",
+            ),
+            "r",
+        ) as f:
+            figure_8_runs_metadata = json.load(f)
 
-    runs_metadata = fiftyone_runs_metadata + selfish_runs_metadata
+    runs_metadata = (
+        fiftyone_runs_metadata + selfish_runs_metadata + figure_8_runs_metadata
+    )
 
     for run in runs_metadata:
         attack_type = run["attack"]
@@ -873,7 +909,28 @@ if __name__ == "__main__":
             network_size_to_data_folders[int(k)] = sz_to_data_strkeys[k]
         plot_output_folder = config["plot_output_folder"]
 
-        g_processed_json_files_folder = os.path.join(config["plot_output_folder"], "jsons")
+        g_processed_json_files_folder = os.path.join(
+            config["plot_output_folder"], "jsons"
+        )
         os.makedirs(g_processed_json_files_folder, exist_ok=True)
 
         plot_attacks(network_sizes, network_size_to_data_folders, plot_output_folder)
+
+    if config["should_plot_figure_8"]:
+        print("Plotting Figure 8")
+
+        network_sizes = config["network_sizes_figure_8"]
+        network_size_to_data_folders = {}
+
+        sz_to_data_strkeys = config["figure_8_network_size_to_data_folders"]
+        for k in sz_to_data_strkeys.keys():
+            network_size_to_data_folders[int(k)] = sz_to_data_strkeys[k]
+
+        plot_output_folder = config["plot_output_folder"]
+
+        g_processed_json_files_folder = os.path.join(
+            config["plot_output_folder"], "jsons"
+        )
+        os.makedirs(g_processed_json_files_folder, exist_ok=True)
+
+        plot_figure_8(network_sizes, network_size_to_data_folders, plot_output_folder)

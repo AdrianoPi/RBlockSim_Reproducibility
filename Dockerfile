@@ -12,6 +12,7 @@ RUN export CC=gcc
 
 RUN mkdir "/results_attacks/"
 RUN mkdir "/results_performance/"
+RUN mkdir "/results_figure_8/"
 RUN mkdir "/plots/"
 
 COPY ./RBlockSim/scripts/requirements.txt /requirements.txt

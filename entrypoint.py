@@ -9,6 +9,7 @@ PATH_TO_RBLOCKSIM = "/RBlockSim_repro/RBlockSim/rblocksim"
 PATH_TO_PLOTTER = "/RBlockSim_repro/RBlockSim/scripts/repro_plotter.py"
 attacks_sizes_to_folder = {}
 performance_sizes_to_folder = {}
+fig8_sizes_to_folder = {}
 g_plots_folder = None
 
 
@@ -23,6 +24,10 @@ def main():
     )
     should_reproduce_performance = (
         config["what_to_reproduce"] == "performance"
+        or config["what_to_reproduce"] == "all"
+    )
+    should_reproduce_fig8 = (
+        config["what_to_reproduce"] == "figure_8"
         or config["what_to_reproduce"] == "all"
     )
 
@@ -44,6 +49,12 @@ def main():
         )
         plot_performance(config)
 
+    if should_reproduce_fig8:
+        reproduce_figure_8(
+            config["worker_threads_figure_8"], config["network_sizes_figure_8"]
+        )
+        plot_figure_8(config)
+
 
 def create_folders(config):
     for size in config["network_sizes_attacks"]:
@@ -55,6 +66,11 @@ def create_folders(config):
         results_folder = f"/results_performance/results_{size}"
         os.mkdir(results_folder)
         performance_sizes_to_folder[size] = results_folder
+
+    for size in config["network_sizes_figure_8"]:
+        results_folder = f"/results_figure_8/results_{size}"
+        os.mkdir(results_folder)
+        fig8_sizes_to_folder[size] = results_folder
 
     # Create the plots folders
     counter = 0
@@ -112,7 +128,7 @@ def reproduce_attacks(worker_threads, network_sizes, iterations):
         run_simulation(config_selfish)
 
     # Copy the results to the reproduced folder
-    # Find a progresive value to name the folder when copying, to avoid overwriting
+    # Find a progressive value to name the folder when copying, to avoid overwriting
     counter = 0
     while os.path.exists(f"/reproduced/results_attacks_{counter}"):
         counter += 1
@@ -120,6 +136,42 @@ def reproduce_attacks(worker_threads, network_sizes, iterations):
     shutil.copytree(
         "/results_attacks/",
         f"/reproduced/results_attacks_{counter}",
+        dirs_exist_ok=True,
+    )
+
+
+def reproduce_figure_8(worker_threads, network_sizes):
+    print("Running attacks simulation for Figure 8")
+
+    for size in network_sizes:
+        # Generate network
+        build_executable(size)
+        os.chdir("/RBlockSim_repro/RBlockSim/scripts/")
+
+        # Create the config file for the runner
+        config = {
+            "executable_path": PATH_TO_RBLOCKSIM,
+            "run_type": "figure_8",
+            "worker_threads": worker_threads,
+            "intervals": [600],
+            "iterations": 1,
+            "network_size": size,
+            "work_folder": fig8_sizes_to_folder[size],
+        }
+
+        # Run
+        print("Launching attack simulation for Figure 8", size)
+        run_simulation(config)
+
+    # Copy the results to the reproduced folder
+    # Find a progressive value to name the folder when copying, to avoid overwriting
+    counter = 0
+    while os.path.exists(f"/reproduced/results_figure_8_{counter}"):
+        counter += 1
+
+    shutil.copytree(
+        "/results_figure_8/",
+        f"/reproduced/results_figure_8_{counter}",
         dirs_exist_ok=True,
     )
 
@@ -163,6 +215,7 @@ def plot_performance(config):
     plotter_config = {
         "should_plot_performance": True,
         "should_plot_attacks": False,
+        "should_plot_figure_8": False,
         "network_sizes_performance": config["network_sizes_performance"],
         "performance_network_size_to_data_folders": performance_sizes_to_folder,
         "plot_output_folder": g_plots_folder,
@@ -178,8 +231,24 @@ def plot_attacks(config):
     plotter_config = {
         "should_plot_performance": False,
         "should_plot_attacks": True,
+        "should_plot_figure_8": False,
         "network_sizes_attacks": config["network_sizes_attacks"],
         "attacks_network_size_to_data_folders": attacks_sizes_to_folder,
+        "plot_output_folder": g_plots_folder,
+    }
+
+    print(plotter_config)
+
+    invoke_plotter(plotter_config)
+
+
+def plot_figure_8(config):
+    plotter_config = {
+        "should_plot_performance": False,
+        "should_plot_attacks": False,
+        "should_plot_figure_8": True,
+        "network_sizes_figure_8": config["network_sizes_figure_8"],
+        "figure_8_network_size_to_data_folders": fig8_sizes_to_folder,
         "plot_output_folder": g_plots_folder,
     }
 
@@ -209,6 +278,8 @@ def run_simulation(config):
 def check_config_attacks(config):
     if config["what_to_reproduce"] == "performance":
         return
+    if config["what_to_reproduce"] == "figure_8":
+        return
 
     if config["worker_threads_attacks"] < 1:
         # Error: no worker threads
@@ -230,6 +301,8 @@ def check_config_attacks(config):
 def check_config_performance(config):
     if config["what_to_reproduce"] == "attacks":
         return
+    if config["what_to_reproduce"] == "figure_8":
+        return
 
     if min(config["worker_threads_performance"]) < 1:
         # Error: no worker threads
@@ -248,8 +321,31 @@ def check_config_performance(config):
         exit(1)
 
 
+def check_config_figure_8(config):
+    if config["what_to_reproduce"] == "attacks":
+        return
+    if config["what_to_reproduce"] == "performance":
+        return
+
+    if config["worker_threads_figure_8"] < 1:
+        # Error: no worker threads
+        print(
+            "Error: Figure 8 simulation requested no worker threads. Please select a number above 0"
+        )
+        exit(1)
+
+    max_cpus = multiprocessing.cpu_count()
+    if config["worker_threads_figure_8"] > max_cpus:
+        # Error: too many worker threads
+        print(
+            "Error: Figure 8 simulation requested more worker threads than available cores. Please select a number below or equal to",
+            max_cpus,
+        )
+        exit(1)
+
+
 def check_config(config):
-    return check_config_attacks(config) and check_config_performance(config)
+    return check_config_attacks(config) and check_config_performance(config) and check_config_figure_8(config)
 
 
 if __name__ == "__main__":

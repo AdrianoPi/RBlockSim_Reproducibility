@@ -15,7 +15,7 @@ g_wts = None
 g_intervals = None
 g_iterations = None
 g_network_size = None
-modes = ["benchmark", "51", "selfish"]
+modes = ["benchmark", "51", "selfish", "figure_8"]
 catchup_tolerances = [1, 2]
 depth = [1, 2, 3]
 hashrates = range(1, 100, 5)
@@ -352,6 +352,121 @@ def run_selfish(executable_path, wts, intervals, iterations, network_size):
                                 json.dump(global_metadata, f)
 
 
+def run_figure_8(executable_path, wts, intervals, iterations, network_size):
+    global metadata_file
+    metadata_file = metadata_file.format(netsize=network_size, attack="figure_8")
+    global ram_usage_file
+    ram_usage_file = ram_usage_file.format(netsize=network_size, attack="figure_8")
+
+    catchup = 2
+    d = 2
+    hashrate = 0.4
+
+    for it in range(iterations):
+        for wt in wts:
+            for i in intervals:
+                rng_seed = random.randint(0, 2**32 - 1)
+                RAM_history = []
+
+                run_metadata = {
+                    "wt": wt,
+                    "interval": i,
+                    "attack": "figure_8",
+                    "catchup": catchup,
+                    "depth": d,
+                    "hashrate": hashrate,
+                    "rng_seed": rng_seed,
+                    "iteration": it,
+                    "RAM_history": RAM_history,
+                }
+                global_metadata.append(run_metadata)
+
+                print(
+                    f"Starting iteration {it} for Figure 8 size {network_size} wt {wt}, interval {i}, hashrate {hashrate}, catchup {catchup}, seed {rng_seed}"
+                )
+
+                this_command = command_selfish.format(
+                    executable_path=executable_path,
+                    wt=wt,
+                    interval=i,
+                    hashrate=hashrate,
+                    catchup=catchup,
+                    depth=d,
+                    rng_seed=rng_seed,
+                    netsize=network_size,
+                    iteration=it,
+                )
+
+                out_file = output_file.format(
+                    outerr="out",
+                    netsize=network_size,
+                    wt=wt,
+                    interval=i,
+                    attack="figure_8",
+                    hashrate=hashrate,
+                    catchup=catchup,
+                    depth=0,
+                    rng_seed=rng_seed,
+                    iteration=it,
+                )
+                err_file = output_file.format(
+                    outerr="err",
+                    netsize=network_size,
+                    wt=wt,
+                    interval=i,
+                    attack="figure_8",
+                    hashrate=hashrate,
+                    catchup=catchup,
+                    depth=0,
+                    rng_seed=rng_seed,
+                    iteration=it,
+                )
+
+                print(f"Running command: {this_command}")
+                print(f"Output file: {out_file}")
+                print(f"Error file: {err_file}")
+
+                if dry_run:
+                    print("")
+                    continue
+
+                proc = subprocess.Popen(
+                    shlex.split(this_command),
+                    stdout=open(out_file, "w"),
+                    stderr=open(err_file, "w"),
+                )
+
+                # Track RAM usage and peak RAM usage
+                peak_memory = 0
+                while proc.poll() is None:
+                    try:
+                        # Get process memory usage
+                        mem_info = psutil.Process(proc.pid).memory_info()
+                        # Update peak if current is higher
+                        usage = mem_info.rss
+                        peak_memory = max(peak_memory, usage)
+                        RAM_history.append(usage)
+                    except psutil.NoSuchProcess:
+                        # Process might have exited before memory info retrieval
+                        pass
+                    time.sleep(0.25)
+
+                # Wait for process to finish (optional)
+                proc.wait()
+                print(
+                    f"Finished Figure 8 iteration {it} for wt {wt}, interval {i}, hashrate {hashrate}, catchup {catchup}, depth {d}, seed {rng_seed}"
+                )
+
+                # Save peak memory usage
+                RAM_peaks[wt][i] = max(RAM_peaks[wt][i], peak_memory)
+                with open(ram_usage_file, "w") as f:
+                    json.dump(RAM_peaks, f)
+
+                # Save metadata.
+                with open(metadata_file, "w") as f:
+                    json.dump(global_metadata, f)
+
+
 if __name__ == "__main__":
     # Parse arguments. First is dry run, second is path to config file
     if len(sys.argv) != 3:
@@ -410,3 +525,5 @@ if __name__ == "__main__":
         run_51(executable_path, g_wts, g_intervals, g_iterations, g_network_size)
     elif g_run_type == "selfish":
         run_selfish(executable_path, g_wts, g_intervals, g_iterations, g_network_size)
+    elif g_run_type == "figure_8":
+        run_figure_8(executable_path, g_wts, g_intervals, 1, g_network_size)
