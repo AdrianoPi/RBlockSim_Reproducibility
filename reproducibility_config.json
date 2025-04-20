@@ -6,7 +6,7 @@
     ],
     "worker_threads_figure_8": 8,
     "network_sizes_figure_8": [
-        100, 1000, 10000, 100000
+        1000, 10000, 100000
     ],
     "worker_threads_performance": [
         1, 4, 8, 16, 22, 44, 66, 88

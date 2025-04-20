@@ -449,7 +449,7 @@ def run_figure_8(executable_path, wts, intervals, iterations, network_size):
                     except psutil.NoSuchProcess:
                         # Process might have exited before memory info retrieval
                         pass
-                    time.sleep(1)
+                    time.sleep(0.25)
 
                 # Wait for process to finish (optional)
                 proc.wait()

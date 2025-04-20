@@ -538,14 +538,16 @@ def plot_expected_vs_actual_mining_rate(out_path=None):
 
 def plot_ram_usage_vs_sim_progress(data_folder_path, network_sizes, plot_output_folder):
     usages = []
+    local_sizes = []
     for size in network_sizes:
         new_usages = get_splined_ram_usage(data_folder_path, size)
         if new_usages is None:
             # Not enough datapoints to spline
             continue
         usages.append(new_usages)
+        local_sizes.append(size)
 
-    for size, usages in zip(network_sizes, usages):
+    for size, usages in zip(local_sizes, usages):
         # structure of usages[attack_type][catchup_tolerance][depth][worker_threads] = (xnew, splined_usage)
         elected_usage = None
         elected_x = None
@@ -562,9 +564,7 @@ def plot_ram_usage_vs_sim_progress(data_folder_path, network_sizes, plot_output_
                         elected_x = x
                     break
                 break
-            break
-
-        plt.plot(elected_x, elected_usage, label=str(size) + " nodes")
+            plt.plot(elected_x, elected_usage, label=str(size) + " nodes")
 
     plt.legend()
     plt.xlabel("Simulation Progress %", fontsize=LABEL_FONT_SIZE)
@@ -611,11 +611,13 @@ def get_splined_ram_usage(data_folder_path, network_size):
                             k=3,
                         )
                         splined_usage = spl(xnew)
+                        splined_usage = [0 if u < 0 else u for u in splined_usage]
                         splined_usages[attack_type][catchup_tolerance][depth][
                             worker_threads
                         ] = (xnew, splined_usage)
         return splined_usages
     except Exception as e:
+        print("Could not spline RAM usage for network size", network_size)
         return None
 
 
@@ -638,29 +640,34 @@ def load_RAM_usages_separate_by_attack_type(folder_path, network_size):
             "r",
         ) as f:
             fiftyone_runs_metadata = json.load(f)
-        
+
         with open(
-        os.path.join(
-            folder_path,
-            f"results_{network_size}",
-            "experiments_ran_metadata_and_RAM_" + str(network_size) + "_aselfish.json",
-        ),
-        "r",
+            os.path.join(
+                folder_path,
+                f"results_{network_size}",
+                "experiments_ran_metadata_and_RAM_"
+                + str(network_size)
+                + "_aselfish.json",
+            ),
+            "r",
         ) as f:
             selfish_runs_metadata = json.load(f)
     except:
         with open(
-        os.path.join(
-            folder_path,
-            f"results_{network_size}",
-            "experiments_ran_metadata_and_RAM_" + str(network_size) + "_afigure_8.json",
-        ),
-        "r",
+            os.path.join(
+                folder_path,
+                f"results_{network_size}",
+                "experiments_ran_metadata_and_RAM_"
+                + str(network_size)
+                + "_afigure_8.json",
+            ),
+            "r",
         ) as f:
             figure_8_runs_metadata = json.load(f)
 
-
-    runs_metadata = fiftyone_runs_metadata + selfish_runs_metadata + figure_8_runs_metadata
+    runs_metadata = (
+        fiftyone_runs_metadata + selfish_runs_metadata + figure_8_runs_metadata
+    )
 
     for run in runs_metadata:
         attack_type = run["attack"]
