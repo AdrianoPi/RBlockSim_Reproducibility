@@ -31,11 +31,20 @@ Configuration used by the authors:
 The reproducibility code is containerized.
 * Docker Engine
 * Docker CLI
+* Git (for the submodules)
 
 ## License
 
 The software is released under the GPL 3.0 license.
 
+## Setup
+Update the submodules
+
+```
+git submodule update --init --recursive
+```
+
+You're ready to run.
 
 ## Reproducing the published results
 
