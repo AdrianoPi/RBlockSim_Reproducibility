@@ -77,3 +77,6 @@ Once all the experiment are finished running, you will find the results in the `
 Every time the artifact is run, it finds the lowest `N` for which the `plots_N` does not exist, and uses it to store the generated plots.
 
 Please note that variation from the presented results is expected, as (pseudo) random numbers are used.
+
+## Reproducing CBlockSim's reported performance
+Similarly to reproducing the published results, to reproduce the performance of CBlockSim you can use the command `reproduce_CBlockSim.sh`. It uses a config file `cblocksim_reproducibility_config.json` which holds the network sizes for which to reproduce the results. The script will print the execution times in seconds for each of the executed network sizes. The only possible network sizes are the ones used in the paper `[100, 1000, 10000, 100000]`. Only a subset of those is acceptable for the script.

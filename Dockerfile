@@ -30,4 +30,4 @@ RUN mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=RELEASE && make -j4 &
 WORKDIR /RBlockSim_repro/
 
 # ENTRYPOINT
-ENTRYPOINT ["python3", "entrypoint.py"]
+# ENTRYPOINT ["python3", "entrypoint.py"]
