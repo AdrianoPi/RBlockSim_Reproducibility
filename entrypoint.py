@@ -100,11 +100,17 @@ def reproduce_attacks(worker_threads, network_sizes, iterations):
         build_executable(size)
         os.chdir("/RBlockSim_repro/RBlockSim/scripts/")
 
+        worker_threads_internal = worker_threads
+
+        if (size < 1000 and worker_threads_internal > 16):
+            # Cap on worker threads count for very small networks, or the simulator starts "thrashing"
+            worker_threads_internal = 16
+
         # Create the config file for the runner
         config_51 = {
             "executable_path": PATH_TO_RBLOCKSIM,
             "run_type": "51",
-            "worker_threads": worker_threads,
+            "worker_threads": worker_threads_internal,
             "intervals": [600],
             "iterations": iterations,
             "network_size": size,
@@ -114,7 +120,7 @@ def reproduce_attacks(worker_threads, network_sizes, iterations):
         config_selfish = {
             "executable_path": PATH_TO_RBLOCKSIM,
             "run_type": "selfish",
-            "worker_threads": worker_threads,
+            "worker_threads": worker_threads_internal,
             "intervals": [600],
             "iterations": iterations,
             "network_size": size,
@@ -148,11 +154,17 @@ def reproduce_figure_8(worker_threads, network_sizes):
         build_executable(size)
         os.chdir("/RBlockSim_repro/RBlockSim/scripts/")
 
+        worker_threads_internal = worker_threads
+
+        if (size < 1000 and worker_threads_internal > 16):
+            # Cap on worker threads count for very small networks, or the simulator starts "thrashing"
+            worker_threads_internal = 16
+
         # Create the config file for the runner
         config = {
             "executable_path": PATH_TO_RBLOCKSIM,
             "run_type": "figure_8",
-            "worker_threads": worker_threads,
+            "worker_threads": worker_threads_internal,
             "intervals": [600],
             "iterations": 1,
             "network_size": size,
@@ -184,10 +196,18 @@ def reproduce_performance(worker_threads_list, network_sizes, iterations):
         build_executable(size)
         os.chdir("/RBlockSim_repro/RBlockSim/scripts/")
 
+        worker_threads_list_internal = worker_threads_list.copy()
+
+        if (size < 1000):
+            # Truncate worker threads list for very small networks, or the simulator starts "thrashing"
+            worker_threads_list_internal = [w for w in worker_threads_list_internal if w <= 16]
+            if len(worker_threads_list_internal) == 0:
+                worker_threads_list_internal = [16]
+
         config_performance = {
             "executable_path": PATH_TO_RBLOCKSIM,
             "run_type": "benchmark",
-            "worker_threads": worker_threads_list,
+            "worker_threads": worker_threads_list_internal,
             "intervals": [13, 600],
             "iterations": iterations,
             "network_size": size,
