@@ -1,0 +1,12 @@
+diff --git a/Main.cpp b/Main.cpp
+index 4e60d9f..6d95f01 100755
+--- a/Main.cpp
++++ b/Main.cpp
+@@ -18,7 +18,6 @@ int main()
+ 			globalTime = nextEvent->timestamp;
+ 			if (nextEvent->type == GENERATE_BLOCK) {
+ 				num++;
+-				cout << "GENERATE " << num << " BLOCKS, CLOCK: " << globalTime << ", AVERAGE BLOCK TIME: " << (double)globalTime / num << " s" << endl;
+ 			}
+ 			scheduler->HandleEvent(nextEvent);
+ 			scheduler->evEngine.RemoveEvent(nextEvent);
